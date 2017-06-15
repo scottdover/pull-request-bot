@@ -1,10 +1,14 @@
 'use strict';
 
-const { getProjectsForTopicAndOrg, pullRequestInfoForProject } = require('./project');
+const { getProjectsForTopicAndOrg } = require('./project');
 const { pushProjectsToSlack } = require('./slack');
-const q = require('q');
 
-exports.handler = () => {
+const apiRequest = (event, context, callback) => {
+    getProjectsForTopicAndOrg(process.env.GITHUB_TOPIC, process.env.GITHUB_ORG)
+        .then(pullRequests => callback(null, pullRequests));
+};
+
+exports.handler = (event, context, callback) => {
     if (
         !process.env.GITHUB_API_KEY
         || !process.env.GITHUB_ORG
@@ -22,10 +26,9 @@ Please include the following environment variables to execute this script:
         process.exit(1);
     }
 
-    const postOpenPullRequests = projects => {
-        q.all(projects.map(project => pullRequestInfoForProject(project)))
-            .then(pushProjectsToSlack);
-    };
+    if (event && event.apiRequest) {
+        return apiRequest(event, context, callback);
+    }
 
-    getProjectsForTopicAndOrg(process.env.GITHUB_TOPIC, process.env.GITHUB_ORG).then(postOpenPullRequests);
+    apiRequest(event, context, (error, pullRequests) => pushProjectsToSlack(pullRequests));
 };

@@ -64,14 +64,34 @@ const pullRequestInfoForProject = project => {
     return deferred.promise;
 };
 
+const getOpenPullRequests = projects => {
+    const deferred = q.defer();
+
+    q.all(projects.map(project => pullRequestInfoForProject(project)))
+        .then(pullRequestsByProject => {
+                let pullRequests = [];
+                pullRequestsByProject.forEach(projectPullRequests => {
+                    pullRequests = pullRequests.concat(projectPullRequests);
+                });
+
+                const filteredPullRequests = pullRequests
+                    // We only care about open pull requests
+                    .filter(pullRequest => pullRequest.state === 'open')
+                    .sort((a, b) => a.status > b.status ? -1 : 1);
+
+                deferred.resolve(filteredPullRequests);
+        });
+
+    return deferred.promise;
+};
+
 const getProjectsForTopicAndOrg = (topic, org) => {
     const deferred = q.defer();
 
     apiRequest(
         `/search/repositories?q=topic:${topic}+user:${org}`,
-        ({items}) => {
-            deferred.resolve(items.map(repo => repo.name));
-        }
+        ({items}) => getOpenPullRequests(items.map(repo => repo.name))
+            .then(deferred.resolve)
     );
 
     return deferred.promise;
