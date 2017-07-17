@@ -38,10 +38,12 @@ const determinePullRequestStatus = reviews => {
 const pullRequestData = (project, {number, title, html_url, state, head, user}) => {
     const deferred = q.defer();
 
-    apiRequest(`/repos/${process.env.GITHUB_ORG}/${project}/pulls/${number}/reviews`, data => {
+    const prUrl = `/repos/${process.env.GITHUB_ORG}/${project}/pulls/${number}`;
+    const getReviewData = reviewers => apiRequest(`${prUrl}/reviews`, data => {
         deferred.resolve({
             number,
             repo: head.repo,
+            reviewers,
             state,
             status: determinePullRequestStatus(data),
             title,
@@ -49,6 +51,9 @@ const pullRequestData = (project, {number, title, html_url, state, head, user}) 
             user,
         });
     });
+
+    // Get requested reviewers
+    apiRequest(`${prUrl}/requested_reviewers`, getReviewData);
 
     return deferred.promise;
 };
@@ -75,8 +80,8 @@ const getOpenPullRequests = projects => {
                 });
 
                 const filteredPullRequests = pullRequests
-                    // We only care about open pull requests
-                    .filter(pullRequest => pullRequest.state === 'open')
+                    // We only care about open pull requests with reviewers
+                    .filter(pullRequest => pullRequest.state === 'open' && pullRequest.reviewers.length > 0)
                     .sort((a, b) => a.status > b.status ? -1 : 1);
 
                 deferred.resolve(filteredPullRequests);

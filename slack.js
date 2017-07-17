@@ -36,9 +36,10 @@ const pushPrsToSlack = (
     approvedPullRequests,
     rejectedPullRequests
 ) => {
-    const text = "Take a little :clock1: for your fellow engineers and show these reviews some :heart:\n";
+    const text = "Take a little :clock1: for your fellow engineers and show these reviews some :heart:\n"
+        + (process.env.WEB_URL ? `_<${process.env.WEB_URL}|View in browser>_\n` : '');
     const reviewablePrAttachments = reviewablePullRequests.length === 0
-        ? [ attachment("You\'ve reviewed all the things. Good job! :allthethings:", '#f1c40f') ]
+        ? [ attachment("You've reviewed all the things. Good job! :allthethings:", '#f1c40f') ]
         : reviewablePullRequests.map(pr => attachment(fullPrMessage(pr), '#f1c40f'));
 
     request({
