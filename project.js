@@ -80,9 +80,11 @@ const getOpenPullRequests = projects => {
                 });
 
                 const filteredPullRequests = pullRequests
-                    // We only care about open pull requests with reviewers
-                    .filter(pullRequest => pullRequest.state === 'open' && pullRequest.reviewers.length > 0)
+                    // We only care about open pull requests
+                    .filter(pullRequest => pullRequest.state === 'open' && pullRequest.reviewers.users.length > 0)
                     .sort((a, b) => a.status > b.status ? -1 : 1);
+
+                debugger;
 
                 deferred.resolve(filteredPullRequests);
         });
