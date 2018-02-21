@@ -81,7 +81,10 @@ const getOpenPullRequests = projects => {
 
                 const filteredPullRequests = pullRequests
                     // We only care about open pull requests with assigned reviewers
-                    .filter(pullRequest => pullRequest.state === 'open' && pullRequest.reviewers.users.length > 0)
+                    .filter(
+                        pullRequest => pullRequest.state === 'open' &&
+                        (pullRequest.reviewers.users.length > 0 || pullRequest.reviewers.teams.length > 0)
+                    )
                     .sort((a, b) => a.status > b.status ? -1 : 1);
 
                 deferred.resolve(filteredPullRequests);
